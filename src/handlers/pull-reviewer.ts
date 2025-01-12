@@ -180,7 +180,7 @@ export class PullReviewer {
       formattedSpecAndPull,
       groundTruths,
       UBIQUITY_OS_APP_NAME,
-      completions.getModelMaxTokenLimit(openRouterAiModel)
+      completions.getModelMaxOutputLimit(openRouterAiModel)
     );
   }
 

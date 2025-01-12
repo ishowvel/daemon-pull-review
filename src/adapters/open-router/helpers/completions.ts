@@ -116,10 +116,9 @@ export class OpenRouterCompletion extends SuperOpenRouter {
     const {
       config: { openRouterAiModel },
     } = context;
-
     const res = await this.client.chat.completions.create({
       model: openRouterAiModel,
-      max_tokens: this.getModelMaxTokenLimit(openRouterAiModel),
+      max_tokens: this.getModelMaxOutputLimit(openRouterAiModel),
       messages: [
         {
           role: "system",
