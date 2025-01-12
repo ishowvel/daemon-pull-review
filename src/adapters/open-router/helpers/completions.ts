@@ -13,7 +13,10 @@ export class OpenRouterCompletion extends SuperOpenRouter {
   }
 
   getModelMaxTokenLimit(model: string): number {
-    const tokenLimits = new Map<string, number>([["anthropic/claude-3.5-sonnet", 200000]]);
+    const tokenLimits = new Map<string, number>([
+      ["anthropic/claude-3.5-sonnet", 200000],
+      ["google/gemini-2.0-flash-thinking-exp:free", 40000],
+    ]);
     const tokenLimit = tokenLimits.get(model);
     if (!tokenLimit) {
       throw this.context.logger.error(`The token limits for configured model ${model} was not found`);
@@ -22,7 +25,10 @@ export class OpenRouterCompletion extends SuperOpenRouter {
   }
 
   getModelMaxOutputLimit(model: string): number {
-    const tokenLimits = new Map<string, number>([["anthropic/claude-3.5-sonnet", 4096]]);
+    const tokenLimits = new Map<string, number>([
+      ["anthropic/claude-3.5-sonnet", 4096],
+      ["google/gemini-2.0-flash-thinking-exp:free", 8000],
+    ]);
     const tokenLimit = tokenLimits.get(model);
     if (!tokenLimit) {
       throw this.context.logger.error(`The token limits for configured model ${model} was not found`);
@@ -58,6 +64,28 @@ export class OpenRouterCompletion extends SuperOpenRouter {
       ],
       max_tokens: maxTokens,
       temperature: 0,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "weather",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              confidenceThreshold: {
+                type: "number",
+                description: "Confidence of the review between 0-1",
+              },
+              reviewComment: {
+                type: "string",
+                description: "The review comment for the pull request",
+              },
+            },
+            required: ["confidenceThreshold", "reviewComment"],
+            additionalProperties: false,
+          },
+        },
+      },
     });
 
     if (!res.choices || res.choices.length === 0) {

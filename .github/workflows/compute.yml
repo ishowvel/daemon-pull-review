@@ -32,7 +32,6 @@ jobs:
       UBIQUITY_OS_APP_NAME: ${{ secrets.UBIQUITY_OS_APP_NAME }}
       PLUGIN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
