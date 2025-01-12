@@ -67,7 +67,7 @@ export class OpenRouterCompletion extends SuperOpenRouter {
       response_format: {
         type: "json_schema",
         json_schema: {
-          name: "weather",
+          name: "review_output",
           strict: true,
           schema: {
             type: "object",
@@ -130,6 +130,22 @@ export class OpenRouterCompletion extends SuperOpenRouter {
           content: groundTruthSource,
         },
       ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "ground_truths",
+          strict: true,
+          schema: {
+            type: "array",
+            items: {
+              type: "string",
+              description: "A ground truth statement",
+            },
+            minItems: 10,
+            maxItems: 10,
+          },
+        },
+      },
     });
 
     if (!res.choices || res.choices.length === 0) {
