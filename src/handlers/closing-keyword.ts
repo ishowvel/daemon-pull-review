@@ -25,7 +25,8 @@ export async function handlePullRequestEditedEvent(context: Context<"pull_reques
   // Find matches in both the old and new bodies
   const oldMatch = extractIssueUrls(oldBody, context.payload.repository.full_name);
   const newMatch = extractIssueUrls(newBody, context.payload.repository.full_name);
-
+  console.error(await getLinkedIssues(context));
+  console.error(newMatch);
   if ((newMatch.size !== 0 && newMatch.size !== oldMatch.size) || [...newMatch].some((url) => !oldMatch.has(url))) {
     logger.info("Pull request body edit detected", {
       oldLinkedIssues: oldMatch,
@@ -38,9 +39,11 @@ export async function handlePullRequestEditedEvent(context: Context<"pull_reques
 }
 
 export function extractIssueUrls(pullBody: string, defaultRepo: string): Set<string> {
+  const bodyWithoutComments = pullBody.replace(/<!--[\s\S]*?-->/g, "");
+
   const pattern =
     /(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+(?:(https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/(\d+))|([^/\s]+\/[^#\s]+)#(\d+)|#(\d+))/gi;
-  const matches = pullBody.matchAll(pattern);
+  const matches = bodyWithoutComments.matchAll(pattern);
   const issueUrls = new Set<string>();
 
   for (const match of matches) {
@@ -59,4 +62,53 @@ export function extractIssueUrls(pullBody: string, defaultRepo: string): Set<str
   }
 
   return issueUrls;
+}
+
+interface LinkedIssue {
+  number: number;
+  title: string;
+  state: string;
+  repository: {
+    nameWithOwner: string;
+  };
+}
+
+interface QueryResponse {
+  repository: {
+    pullRequest: {
+      closingIssuesReferences: {
+        nodes: LinkedIssue[];
+      };
+    };
+  };
+}
+
+export async function getLinkedIssues(context: Context) {
+  const query = `
+    query($owner: String!, $repo: String!, $prNumber: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $prNumber) {
+          closingIssuesReferences(first: 100) {
+            nodes {
+              number
+              title
+              state
+              repository {
+                nameWithOwner
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const prNumber = context.payload.pull_request.number;
+
+  const response = await context.octokit.graphql<QueryResponse>(query, {
+    owner: context.payload.repository.owner.login,
+    repo: context.payload.repository.name,
+    prNumber,
+  });
+
+  return response.repository.pullRequest.closingIssuesReferences.nodes;
 }
